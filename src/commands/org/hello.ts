@@ -1,10 +1,6 @@
 import { Flags, SfCommand } from "@salesforce/sf-plugins-core";
-import { queryOrganization } from "../../queries.js";
 
-export type OrgHelloResult = {
-  orgId: string;
-  outputString: string;
-};
+export type OrgHelloResult = {};
 
 export class OrgHelloCommand extends SfCommand<OrgHelloResult> {
   public static readonly summary = "print a greeting and your org IDs";
@@ -14,7 +10,6 @@ export class OrgHelloCommand extends SfCommand<OrgHelloResult> {
   ];
 
   public static readonly flags = {
-    "target-org": Flags.requiredOrg(),
     name: Flags.string({
       char: "n",
       summary: "name to print",
@@ -23,19 +18,28 @@ export class OrgHelloCommand extends SfCommand<OrgHelloResult> {
   };
 
   public async run(): Promise<OrgHelloResult> {
-    const { flags } = await this.parse(OrgHelloCommand);
-    const conn = flags["target-org"].getConnection();
-    const organization = await queryOrganization(conn);
-    let outputString = `Hello ${flags.name}! This is org: ${organization.Name}`;
-    if (organization.TrialExpirationDate) {
-      const date = new Date(
-        new Date(organization.TrialExpirationDate).setUTCHours(0)
-      ).toDateString();
-      outputString = `${outputString} and I will be around until ${date}!`;
-    }
-    this.log(outputString);
-
-    // Return an object to be displayed with --json
-    return { orgId: organization.Id, outputString };
+    // const { flags } = await this.parse(OrgHelloCommand);
+    const apiVersion = "62.0";
+    const apiVersionMajor = apiVersion.split(".")[0];
+    const reportResult = await fetch(
+      `https://dx-extended-coverage.my.salesforce-sites.com/services/apexrest/report?version=${apiVersionMajor}`
+    );
+    const report = await reportResult.json();
+    // console.log({ report });
+    // @ts-expect-error
+    console.log(report.types.WorkflowRule.channels);
+    // channels: {
+    //   unlockedPackagingWithoutNamespace: true,
+    //   unlockedPackagingWithNamespace: true,
+    //   toolingApi: true,
+    //   sourceTracking: true,
+    //   metadataApi: true,
+    //   managedPackaging: true,
+    //   classicUnmanagedPackaging: true,
+    //   classicManagedPackaging: true,
+    //   changeSets: true,
+    //   apexMetadataApi: false
+    // }
+    return {};
   }
 }
