@@ -1,4 +1,5 @@
 import { Flags, SfCommand } from "@salesforce/sf-plugins-core";
+import { ComponentSetBuilder } from "@salesforce/source-deploy-retrieve";
 
 export type OrgHelloResult = {};
 
@@ -8,6 +9,8 @@ export class OrgHelloCommand extends SfCommand<OrgHelloResult> {
     "<%= config.bin %> <%= command.id %> --target-org myOrg@example.com",
     "<%= config.bin %> <%= command.id %> --name myname --target-org myOrg@example.com",
   ];
+
+  public static readonly requiresProject = true;
 
   public static readonly flags = {
     name: Flags.string({
@@ -26,8 +29,6 @@ export class OrgHelloCommand extends SfCommand<OrgHelloResult> {
     );
     const report = await reportResult.json();
     // console.log({ report });
-    // @ts-expect-error
-    console.log(report.types.WorkflowRule.channels);
     // channels: {
     //   unlockedPackagingWithoutNamespace: true,
     //   unlockedPackagingWithNamespace: true,
@@ -40,6 +41,23 @@ export class OrgHelloCommand extends SfCommand<OrgHelloResult> {
     //   changeSets: true,
     //   apexMetadataApi: false
     // }
+    const requiredChannels = [
+      "managedPackaging",
+      "unlockedPackagingWithoutNamespace",
+    ];
+    const packageDirectories = this.project!.getPackageDirectories();
+    const sourcePaths = packageDirectories.map((dir) => dir.path);
+    const componentSet = await ComponentSetBuilder.build({
+      sourcepath: sourcePaths,
+    });
+    const objects = await componentSet.getObject();
+    for (const mdType of objects.Package.types) {
+      // @ts-expect-error
+      const coverage = report["types"][mdType.name];
+      if (requiredChannels.some((channel) => !coverage?.channels[channel])) {
+        console.error(mdType.name, mdType.members, coverage?.channels);
+      }
+    }
     return {};
   }
 }
