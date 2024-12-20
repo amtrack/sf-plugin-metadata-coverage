@@ -1,0 +1,44 @@
+{
+  "name": "sf-plugin-metadata-coverage",
+  "version": "0.0.0-development",
+  "type": "module",
+  "bin": {
+    "sf-plugin-metadata-coverage": "bin/run.js"
+  },
+  "dependencies": {
+    "@salesforce/sf-plugins-core": "12.1.1"
+  },
+  "devDependencies": {
+    "@salesforce/dev-scripts": "10.2.11",
+    "oclif": "4.17.0"
+  },
+  "files": [
+    "/bin/run.js",
+    "/lib",
+    "/oclif.manifest.json"
+  ],
+  "keywords": [
+    "sfdx-plugin",
+    "sf-plugin"
+  ],
+  "license": "MIT",
+  "oclif": {
+    "repositoryPrefix": "<%- repo %>/blob/main/<%- commandPath %>",
+    "commands": "./lib/commands",
+    "bin": "sf",
+    "topicSeparator": " ",
+    "additionalHelpFlags": [
+      "-h"
+    ]
+  },
+  "mocha": {
+    "loader": "ts-node/esm",
+    "no-warnings": "ExperimentalWarning"
+  },
+  "scripts": {
+    "build": "rm -rf lib && tsc -p . && oclif manifest",
+    "prepack": "npm run build",
+    "prepare": "npm run build",
+    "test": "tsc -p test && nyc --reporter=lcov --reporter=text mocha \"test/**/*.test.ts\""
+  }
+}
