@@ -1,5 +1,7 @@
 import { Flags, SfCommand } from "@salesforce/sf-plugins-core";
 import { ComponentSetBuilder } from "@salesforce/source-deploy-retrieve";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 
 export type OrgHelloResult = {};
 
@@ -24,10 +26,23 @@ export class OrgHelloCommand extends SfCommand<OrgHelloResult> {
     // const { flags } = await this.parse(OrgHelloCommand);
     const apiVersion = "62.0";
     const apiVersionMajor = apiVersion.split(".")[0];
-    const reportResult = await fetch(
-      `https://dx-extended-coverage.my.salesforce-sites.com/services/apexrest/report?version=${apiVersionMajor}`
+    // const reportResult = await fetch(
+    //   `https://dx-extended-coverage.my.salesforce-sites.com/services/apexrest/report?version=${apiVersionMajor}`
+    // );
+    // const report = await reportResult.json();
+    const report = JSON.parse(
+      readFileSync(
+        join(
+          dirname(new URL(import.meta.url).pathname),
+          "..",
+          "..",
+          "..",
+          "data",
+          `report-${apiVersionMajor}.json`
+        ),
+        "utf8"
+      )
     );
-    const report = await reportResult.json();
     // console.log({ report });
     // channels: {
     //   unlockedPackagingWithoutNamespace: true,
@@ -52,8 +67,7 @@ export class OrgHelloCommand extends SfCommand<OrgHelloResult> {
     });
     const objects = await componentSet.getObject();
     for (const mdType of objects.Package.types) {
-      // @ts-expect-error
-      const coverage = report["types"][mdType.name];
+      const coverage = report.types[mdType.name];
       if (requiredChannels.some((channel) => !coverage?.channels[channel])) {
         console.error(mdType.name, mdType.members, coverage?.channels);
       }
