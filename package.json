@@ -1,0 +1,52 @@
+{
+  "name": "sf-plugin-metadata-coverage",
+  "version": "0.0.0-development",
+  "description": "sf plugin to check the metadata coverage report for the given source",
+  "keywords": [
+    "sfdx-plugin",
+    "sf-plugin"
+  ],
+  "repository": "amtrack/sf-plugin-metadata-coverage",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "sf-plugin-metadata-coverage": "bin/run.js"
+  },
+  "files": [
+    "/bin/run.js",
+    "/lib",
+    "/oclif.manifest.json"
+  ],
+  "scripts": {
+    "build": "rm -rf lib && tsc -p . && oclif manifest && oclif readme",
+    "prepack": "npm run build",
+    "prepare": "npm run build",
+    "test": "tsc -p test && nyc --reporter=lcov --reporter=text mocha \"test/**/*.test.ts\""
+  },
+  "mocha": {
+    "loader": "ts-node/esm",
+    "no-warnings": "ExperimentalWarning"
+  },
+  "oclif": {
+    "additionalHelpFlags": [
+      "-h"
+    ],
+    "bin": "sf",
+    "commands": "./lib/commands",
+    "repositoryPrefix": "<%- repo %>/blob/main/<%- commandPath %>",
+    "topicSeparator": " ",
+    "topics": {
+      "metadata-coverage": {
+        "description": "Work with the Metadata Coverage Report."
+      }
+    }
+  },
+  "dependencies": {
+    "@salesforce/sf-plugins-core": "12.2.4",
+    "@salesforce/source-deploy-retrieve": "12.22.11"
+  },
+  "devDependencies": {
+    "@salesforce/dev-scripts": "11.0.4",
+    "oclif": "4.22.16"
+  }
+}
