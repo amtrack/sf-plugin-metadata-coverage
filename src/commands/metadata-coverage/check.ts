@@ -190,7 +190,7 @@ export class MetadataCoverageCheck extends SfCommand<MetadataCoverageResult> {
             result.success = false;
             result.uncovered.push({
               type: typeName,
-              members: mdType.members,
+              members: [`${setting}Settings`],
               channels: coverage.channels,
             });
           }
