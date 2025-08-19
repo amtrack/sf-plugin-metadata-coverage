@@ -1,9 +1,11 @@
 import { TestContext } from "@salesforce/core/testSetup";
+import { stubSfCommandUx } from "@salesforce/sf-plugins-core";
 import { expect } from "chai";
 import { MetadataCoverageCheck } from "../../../src/commands/metadata-coverage/check.js";
 
 describe("metadata-coverage check", () => {
   const $$ = new TestContext();
+  stubSfCommandUx($$.SANDBOX);
 
   beforeEach(async () => {
     $$.setConfigStubContents("SfProjectJson", {
@@ -22,7 +24,7 @@ describe("metadata-coverage check", () => {
   });
 
   it("should check successfully", async () => {
-    const result = await MetadataCoverageCheck.run([]);
+    const result = await MetadataCoverageCheck.run(["--2gp-unlocked"]);
     expect(result.success).to.equal(true);
   });
 

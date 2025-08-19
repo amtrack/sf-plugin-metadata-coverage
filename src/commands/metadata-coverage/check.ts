@@ -70,6 +70,17 @@ export class MetadataCoverageCheck extends SfCommand<MetadataCoverageResult> {
   public static readonly requiresProject = true;
 
   public static readonly flags = {
+    "1gp-managed": Flags.boolean({ helpGroup: "Channels" }),
+    "1gp-unmanaged": Flags.boolean({ helpGroup: "Channels" }),
+    "2gp-managed": Flags.boolean({ helpGroup: "Channels" }),
+    "2gp-unlocked": Flags.boolean({ helpGroup: "Channels" }),
+    "2gp-unlocked-with-namespace": Flags.boolean({ helpGroup: "Channels" }),
+    "source-tracking": Flags.boolean({ helpGroup: "Channels" }),
+    "tooling-api": Flags.boolean({ helpGroup: "Channels" }),
+    "metadata-api": Flags.boolean({ helpGroup: "Channels" }),
+    "apex-metadata-api": Flags.boolean({ helpGroup: "Channels" }),
+    changesets: Flags.boolean({ helpGroup: "Channels" }),
+
     "api-version": Flags.orgApiVersion(),
   };
 
@@ -122,10 +133,40 @@ export class MetadataCoverageCheck extends SfCommand<MetadataCoverageResult> {
     });
     const objects = await componentSet.getObject();
 
-    const requiredChannels: (keyof Channels)[] = [
-      "managedPackaging",
-      "unlockedPackagingWithoutNamespace",
-    ];
+    const requiredChannels: (keyof Channels)[] = [];
+    if (flags["1gp-managed"]) {
+      requiredChannels.push("classicManagedPackaging");
+    }
+    if (flags["1gp-unmanaged"]) {
+      requiredChannels.push("classicUnmanagedPackaging");
+    }
+    if (flags["2gp-managed"]) {
+      requiredChannels.push("managedPackaging");
+    }
+    if (flags["2gp-unlocked"]) {
+      requiredChannels.push("unlockedPackagingWithoutNamespace");
+    }
+    if (flags["2gp-unlocked-with-namespace"]) {
+      requiredChannels.push("unlockedPackagingWithNamespace");
+    }
+    if (flags["source-tracking"]) {
+      requiredChannels.push("sourceTracking");
+    }
+    if (flags["tooling-api"]) {
+      requiredChannels.push("toolingApi");
+    }
+    if (flags["metadata-api"]) {
+      requiredChannels.push("metadataApi");
+    }
+    if (flags["apex-metadata-api"]) {
+      requiredChannels.push("apexMetadataApi");
+    }
+    if (flags.changesets) {
+      requiredChannels.push("changeSets");
+    }
+    if (requiredChannels.length === 0) {
+      this.warn("You haven't specified any channels using flags. ");
+    }
 
     const result: MetadataCoverageResult = {
       success: true,
@@ -133,6 +174,29 @@ export class MetadataCoverageCheck extends SfCommand<MetadataCoverageResult> {
     };
     for (const mdType of objects.Package.types) {
       let typeName = mdType.name;
+      if (typeName === "Settings") {
+        for (const setting of mdType.members) {
+          typeName = `${setting}Settings`;
+          const coverage = report.types[typeName];
+          if (!coverage) {
+            result.success = false;
+            result.uncovered.push({
+              type: typeName,
+              members: [`${setting}Settings`],
+            });
+          } else if (
+            requiredChannels.some((channel) => !coverage.channels[channel])
+          ) {
+            result.success = false;
+            result.uncovered.push({
+              type: typeName,
+              members: mdType.members,
+              channels: coverage.channels,
+            });
+          }
+        }
+        continue;
+      }
       if (typeName === "CustomLabel") {
         typeName = "CustomLabels";
       }
@@ -161,7 +225,7 @@ export class MetadataCoverageCheck extends SfCommand<MetadataCoverageResult> {
       this.logJson(result.uncovered);
       throw new Error("Some metadata types are not covered.");
     }
-    this.log("Successfully checked Metadata Coverage Report.");
+    this.logToStderr("Successfully checked Metadata Coverage Report.");
     return result;
   }
 }
