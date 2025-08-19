@@ -1,6 +1,6 @@
 import { Flags, SfCommand } from "@salesforce/sf-plugins-core";
 import { ComponentSetBuilder } from "@salesforce/source-deploy-retrieve";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 export type MetadataCoverageResult = {
@@ -23,31 +23,50 @@ export class MetadataCoverageCheck extends SfCommand<MetadataCoverageResult> {
 
   public async run(): Promise<MetadataCoverageResult> {
     const { flags } = await this.parse(MetadataCoverageCheck);
-    console.error(flags["api-version"]);
-    const apiVersion = "62.0";
-    const sourceApiVersion = this.project
-      ?.getSfProjectJson()
-      .get("sourceApiVersion");
-    console.error({ sourceApiVersion });
+    const sourceApiVersion =
+      this.project!.getSfProjectJson().get("sourceApiVersion");
+    const apiVersion = flags["api-version"] ?? sourceApiVersion ?? "64.0";
     const apiVersionMajor = apiVersion.split(".")[0];
-    // const reportResult = await fetch(
-    //   `https://dx-extended-coverage.my.salesforce-sites.com/services/apexrest/report?version=${apiVersionMajor}`
-    // );
-    // const report = await reportResult.json();
-    const report = JSON.parse(
-      readFileSync(
-        join(
-          dirname(new URL(import.meta.url).pathname),
-          "..",
-          "..",
-          "..",
-          "data",
-          `report-${apiVersionMajor}.json`
-        ),
-        "utf8"
-      )
+    const reportPath = join(
+      dirname(new URL(import.meta.url).pathname),
+      "..",
+      "..",
+      "..",
+      "data",
+      `report-${apiVersionMajor}.json`
     );
-    // console.log({ report });
+    let report;
+    if (existsSync(reportPath)) {
+      report = JSON.parse(
+        readFileSync(
+          join(
+            dirname(new URL(import.meta.url).pathname),
+            "..",
+            "..",
+            "..",
+            "data",
+            `report-${apiVersionMajor}.json`
+          ),
+          "utf8"
+        )
+      );
+    } else {
+      this.spinner.start(
+        `Downloading Metadata Coverage Report v${apiVersionMajor}`
+      );
+      const reportResult = await fetch(
+        `https://dx-extended-coverage.my.salesforce-sites.com/services/apexrest/report?version=${apiVersionMajor}`
+      );
+      report = await reportResult.json();
+      this.spinner.stop();
+    }
+    const packageDirectories = this.project!.getPackageDirectories();
+    const sourcePaths = packageDirectories.map((dir) => dir.path);
+    const componentSet = await ComponentSetBuilder.build({
+      sourcepath: sourcePaths,
+    });
+    const objects = await componentSet.getObject();
+
     // channels: {
     //   unlockedPackagingWithoutNamespace: true,
     //   unlockedPackagingWithNamespace: true,
@@ -64,15 +83,17 @@ export class MetadataCoverageCheck extends SfCommand<MetadataCoverageResult> {
       "managedPackaging",
       "unlockedPackagingWithoutNamespace",
     ];
-    const packageDirectories = this.project!.getPackageDirectories();
-    const sourcePaths = packageDirectories.map((dir) => dir.path);
-    const componentSet = await ComponentSetBuilder.build({
-      sourcepath: sourcePaths,
-    });
-    const objects = await componentSet.getObject();
+
     let success = true;
     for (const mdType of objects.Package.types) {
-      const coverage = report.types[mdType.name];
+      let typeName = mdType.name;
+      if (typeName === "CustomLabel") {
+        typeName = "CustomLabels";
+      }
+      if (typeName === "MatchingRule") {
+        typeName = "MatchingRules";
+      }
+      const coverage = report.types[typeName];
       if (requiredChannels.some((channel) => !coverage?.channels[channel])) {
         success = false;
         console.error(mdType.name, mdType.members, coverage?.channels);
