@@ -6,12 +6,12 @@
     "sf-plugin-metadata-coverage": "bin/run.js"
   },
   "dependencies": {
-    "@salesforce/sf-plugins-core": "12.2.2",
-    "@salesforce/source-deploy-retrieve": "12.19.10"
+    "@salesforce/sf-plugins-core": "12.2.4",
+    "@salesforce/source-deploy-retrieve": "12.22.8"
   },
   "devDependencies": {
-    "@salesforce/dev-scripts": "11.0.2",
-    "oclif": "4.18.4"
+    "@salesforce/dev-scripts": "11.0.3",
+    "oclif": "4.22.12"
   },
   "files": [
     "/bin/run.js",
