@@ -24,7 +24,11 @@ describe("metadata-coverage check", () => {
   });
 
   it("should check successfully", async () => {
-    const result = await MetadataCoverageCheck.run(["--2gp-unlocked"]);
+    const result = await MetadataCoverageCheck.run([
+      "--source-dir",
+      "force-app",
+      "--2gp-unlocked",
+    ]);
     expect(result.success).to.equal(true);
   });
 

@@ -64,28 +64,69 @@ export class MetadataCoverageCheck extends SfCommand<MetadataCoverageResult> {
   public static readonly summary =
     "check the Metadata Coverage for the given source";
   public static readonly examples = [
-    "<%= config.bin %> <%= command.id %> --target-org myOrg@example.com",
+    "<%= config.bin %> <%= command.id %> --source-dir force-app",
+    "<%= config.bin %> <%= command.id %> --source-dir force-app --source-dir unpackaged",
+    "<%= config.bin %> <%= command.id %> --manifest src/package.xml",
+    "<%= config.bin %> <%= command.id %> --metadata CustomHelpMenuSection",
   ];
 
   public static readonly requiresProject = true;
 
   public static readonly flags = {
-    "1gp-managed": Flags.boolean({ helpGroup: "Channels" }),
-    "1gp-unmanaged": Flags.boolean({ helpGroup: "Channels" }),
-    "2gp-managed": Flags.boolean({ helpGroup: "Channels" }),
-    "2gp-unlocked": Flags.boolean({ helpGroup: "Channels" }),
-    "2gp-unlocked-with-namespace": Flags.boolean({ helpGroup: "Channels" }),
-    "source-tracking": Flags.boolean({ helpGroup: "Channels" }),
-    "tooling-api": Flags.boolean({ helpGroup: "Channels" }),
-    "metadata-api": Flags.boolean({ helpGroup: "Channels" }),
-    "apex-metadata-api": Flags.boolean({ helpGroup: "Channels" }),
-    changesets: Flags.boolean({ helpGroup: "Channels" }),
+    "source-dir": Flags.string({
+      char: "d",
+      summary: `File paths for source to check.`,
+      description: `Example values: 'force-app', 'force-app/main/default/'`,
+      multiple: true,
+      exclusive: ["manifest", "metadata"],
+      exactlyOne: ["manifest", "metadata", "source-dir"],
+      helpGroup: "Sources",
+    }),
+    manifest: Flags.file({
+      char: "x",
+      summary:
+        "File path for the manifest (package.xml) that specifies the components to check.",
+      exclusive: ["metadata", "source-dir"],
+      exactlyOne: ["manifest", "metadata", "source-dir"],
+      exists: true,
+      helpGroup: "Sources",
+    }),
+    metadata: Flags.string({
+      char: "m",
+      summary: `Metadata component names to check.`,
+      description: `Example values: 'RecordType:Account.Business', 'Profile:Admin'`,
+      multiple: true,
+      exclusive: ["manifest", "source-dir"],
+      exactlyOne: ["manifest", "metadata", "source-dir"],
+      helpGroup: "Sources",
+    }),
+
+    "1gp-managed": Flags.boolean({ helpGroup: "Metadata Coverage Channels" }),
+    "1gp-unmanaged": Flags.boolean({ helpGroup: "Metadata Coverage Channels" }),
+    "2gp-managed": Flags.boolean({ helpGroup: "Metadata Coverage Channels" }),
+    "2gp-unlocked": Flags.boolean({ helpGroup: "Metadata Coverage Channels" }),
+    "2gp-unlocked-with-namespace": Flags.boolean({
+      helpGroup: "Metadata Coverage Channels",
+    }),
+    "source-tracking": Flags.boolean({
+      helpGroup: "Metadata Coverage Channels",
+    }),
+    "tooling-api": Flags.boolean({ helpGroup: "Metadata Coverage Channels" }),
+    "metadata-api": Flags.boolean({ helpGroup: "Metadata Coverage Channels" }),
+    "apex-metadata-api": Flags.boolean({
+      helpGroup: "Metadata Coverage Channels",
+    }),
+    changesets: Flags.boolean({ helpGroup: "Metadata Coverage Channels" }),
 
     "api-version": Flags.orgApiVersion(),
   };
 
   public async run(): Promise<MetadataCoverageResult> {
     const { flags } = await this.parse(MetadataCoverageCheck);
+    if (!flags.manifest && !flags["source-dir"] && !flags.metadata) {
+      throw new Error("");
+    }
+
     const sourceApiVersion =
       this.project!.getSfProjectJson().get("sourceApiVersion");
     const apiVersion = flags["api-version"] ?? sourceApiVersion ?? "64.0";
@@ -126,10 +167,28 @@ export class MetadataCoverageCheck extends SfCommand<MetadataCoverageResult> {
       report = (await reportResult.json()) as MetadataCoverageReport;
       this.spinner.stop();
     }
-    const packageDirectories = this.project!.getPackageDirectories();
-    const sourcePaths = packageDirectories.map((dir) => dir.path);
     const componentSet = await ComponentSetBuilder.build({
-      sourcepath: sourcePaths,
+      sourcepath: flags["source-dir"],
+      ...(flags.manifest
+        ? {
+            manifest: {
+              manifestPath: flags.manifest,
+              directoryPaths: this.project!.getUniquePackageDirectories().map(
+                (dir) => dir.fullPath
+              ),
+            },
+          }
+        : {}),
+      ...(flags.metadata
+        ? {
+            metadata: {
+              metadataEntries: flags.metadata,
+              directoryPaths: this.project!.getUniquePackageDirectories().map(
+                (dir) => dir.fullPath
+              ),
+            },
+          }
+        : {}),
     });
     const objects = await componentSet.getObject();
 

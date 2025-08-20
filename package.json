@@ -1,9 +1,40 @@
 {
   "name": "sf-plugin-metadata-coverage",
   "version": "0.0.0-development",
+  "description": "sf plugin to check the metadata coverage of metadata types in your sfdx project using the metadata coverage report",
+  "keywords": [
+    "sfdx-plugin",
+    "sf-plugin"
+  ],
+  "license": "MIT",
   "type": "module",
   "bin": {
     "sf-plugin-metadata-coverage": "bin/run.js"
+  },
+  "files": [
+    "/bin/run.js",
+    "/lib",
+    "/data",
+    "/oclif.manifest.json"
+  ],
+  "scripts": {
+    "build": "rm -rf lib && tsc -p . && oclif manifest",
+    "prepack": "npm run build",
+    "prepare": "npm run build",
+    "test": "tsc -p test && nyc --reporter=lcov --reporter=text mocha \"test/**/*.test.ts\""
+  },
+  "mocha": {
+    "loader": "ts-node/esm",
+    "no-warnings": "ExperimentalWarning"
+  },
+  "oclif": {
+    "additionalHelpFlags": [
+      "-h"
+    ],
+    "bin": "sf",
+    "commands": "./lib/commands",
+    "repositoryPrefix": "<%- repo %>/blob/main/<%- commandPath %>",
+    "topicSeparator": " "
   },
   "dependencies": {
     "@salesforce/sf-plugins-core": "12.2.4",
@@ -12,35 +43,5 @@
   "devDependencies": {
     "@salesforce/dev-scripts": "11.0.3",
     "oclif": "4.22.12"
-  },
-  "files": [
-    "/bin/run.js",
-    "/lib",
-    "/data",
-    "/oclif.manifest.json"
-  ],
-  "keywords": [
-    "sfdx-plugin",
-    "sf-plugin"
-  ],
-  "license": "MIT",
-  "oclif": {
-    "repositoryPrefix": "<%- repo %>/blob/main/<%- commandPath %>",
-    "commands": "./lib/commands",
-    "bin": "sf",
-    "topicSeparator": " ",
-    "additionalHelpFlags": [
-      "-h"
-    ]
-  },
-  "mocha": {
-    "loader": "ts-node/esm",
-    "no-warnings": "ExperimentalWarning"
-  },
-  "scripts": {
-    "build": "rm -rf lib && tsc -p . && oclif manifest",
-    "prepack": "npm run build",
-    "prepare": "npm run build",
-    "test": "tsc -p test && nyc --reporter=lcov --reporter=text mocha \"test/**/*.test.ts\""
   }
 }
