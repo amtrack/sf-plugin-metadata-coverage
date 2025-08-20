@@ -64,6 +64,7 @@ export class MetadataCoverageCheck extends SfCommand<MetadataCoverageResult> {
   public static readonly summary =
     "check the Metadata Coverage for the given source";
   public static readonly examples = [
+    "<%= config.bin %> <%= command.id %> --metadata CustomHelpMenuSection",
     "<%= config.bin %> <%= command.id %> --source-dir force-app",
     "<%= config.bin %> <%= command.id %> --source-dir force-app --source-dir unpackaged",
     "<%= config.bin %> <%= command.id %> --manifest src/package.xml",
@@ -78,7 +79,6 @@ export class MetadataCoverageCheck extends SfCommand<MetadataCoverageResult> {
       summary: `File paths for source to check.`,
       description: `Example values: 'force-app', 'force-app/main/default/'`,
       multiple: true,
-      exclusive: ["manifest", "metadata"],
       exactlyOne: ["manifest", "metadata", "source-dir"],
       helpGroup: "Sources",
     }),
@@ -86,7 +86,6 @@ export class MetadataCoverageCheck extends SfCommand<MetadataCoverageResult> {
       char: "x",
       summary:
         "File path for the manifest (package.xml) that specifies the components to check.",
-      exclusive: ["metadata", "source-dir"],
       exactlyOne: ["manifest", "metadata", "source-dir"],
       exists: true,
       helpGroup: "Sources",
@@ -96,7 +95,6 @@ export class MetadataCoverageCheck extends SfCommand<MetadataCoverageResult> {
       summary: `Metadata component names to check.`,
       description: `Example values: 'RecordType:Account.Business', 'Profile:Admin'`,
       multiple: true,
-      exclusive: ["manifest", "source-dir"],
       exactlyOne: ["manifest", "metadata", "source-dir"],
       helpGroup: "Sources",
     }),
@@ -123,9 +121,6 @@ export class MetadataCoverageCheck extends SfCommand<MetadataCoverageResult> {
 
   public async run(): Promise<MetadataCoverageResult> {
     const { flags } = await this.parse(MetadataCoverageCheck);
-    if (!flags.manifest && !flags["source-dir"] && !flags.metadata) {
-      throw new Error("");
-    }
 
     const sourceApiVersion =
       this.project!.getSfProjectJson().get("sourceApiVersion");
@@ -191,6 +186,9 @@ export class MetadataCoverageCheck extends SfCommand<MetadataCoverageResult> {
         : {}),
     });
     const objects = await componentSet.getObject();
+    this.logToStderr(
+      `Checking ${objects.Package.types.length} metadata types.`
+    );
 
     const requiredChannels: (keyof Channels)[] = [];
     if (flags["1gp-managed"]) {

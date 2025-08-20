@@ -12,39 +12,59 @@ sf plugins install sf-plugin-metadata-coverage
 
 ## Usage
 
-A common scenario might be to check your sfdx project before trying to create an Unlocked Package.
-
-```shell
-sf metadata-coverage check --2gp-unlocked
-```
-
-Will all of my metadata types finally be supported for Unlocked Packaging in the upcoming release?
-
-```shell
-sf metadata-coverage check --2gp-unlocked --api-version 65.0
-```
-
-Available flags:
-
-```shell
-# only check if there are metadata types that are unknown to the Metadata Coverage Report
-sf metadata-coverage check
-# check if the metadata types are supported in
-sf metadata-coverage check --1gp-managed
-sf metadata-coverage check --1gp-unmanaged
-sf metadata-coverage check --2gp-managed
-sf metadata-coverage check --2gp-unlocked
-sf metadata-coverage check --2gp-unlocked-with-namespace
-sf metadata-coverage check --source-tracking
-sf metadata-coverage check --tooling-api
-sf metadata-coverage check --metadata-api
-sf metadata-coverage check --apex-metadata-api
-sf metadata-coverage check --changeset
-# or any combination
-sf metadata-coverage check --1gp-managed --2gp-managed
+```sh-session
+$ sf metadata-coverage check --source-dir force-app --2gp-unlocked
+Found 38 metadata types to check.
+Successfully checked Metadata Coverage Report.
 ```
 
 The command prints metadata types that are not supported and exits with an error code.
+
+### Input Sources
+
+- `--source-dir`
+- `--metadata`
+- `--manifest`
+
+### Checks
+
+- `--1gp-managed`
+- `--1gp-unmanaged`
+- `--2gp-managed`
+- `--2gp-unlocked`
+- `--2gp-unlocked-with-namespace`
+- `--source-tracking`
+- `--tooling-api`
+- `--metadata-api`
+- `--apex-metadata-api`
+- `--changeset`
+
+### Example Use Cases
+
+Is the Metadata Type "CustomHelpMenuSection" supportd for a 2GP Managed Package?
+
+```shell
+sf metadata-coverage check -m CustomHelpMenuSection --2gp-managed
+```
+
+... or maybe in the upcoming release?
+
+```shell
+sf metadata-coverage check -m CustomHelpMenuSection --2gp-managed --api-version 65.0
+```
+
+Can I create an Unlocked Package from my source directory?
+
+```shell
+sf metadata-coverage check --source-dir force-app --2gp-unlocked
+```
+
+Can I convert my 1GP Managed Package to a 2GP Managed Package?
+
+```shell
+sf project retrieve start --package-name MyPkg --target-metadata-dir src --unzip --target-org my-pkg-org
+sf metadata-coverage check --manifest src/unpackaged/package.xml --2gp-managed
+```
 
 ## Development
 
