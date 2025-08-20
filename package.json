@@ -17,6 +17,7 @@
     "/data",
     "/oclif.manifest.json"
   ],
+  "repository": "amtrack/sf-plugin-metadata-coverage",
   "scripts": {
     "build": "rm -rf lib && tsc -p . && oclif manifest",
     "prepack": "npm run build",
