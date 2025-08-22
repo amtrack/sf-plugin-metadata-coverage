@@ -57,18 +57,19 @@ export enum Status {
 
 export type MetadataCoverageResult = {
   success: boolean;
-  uncovered: { type: string; members: string[]; channels?: Channels }[];
+  message: string;
+  unsupported: { type: string; members: string[]; channels?: Channels }[];
 };
 
 export class MetadataCoverageCheck extends SfCommand<MetadataCoverageResult> {
   public static readonly summary =
     "check the Metadata Coverage for the given source";
   public static readonly examples = [
-    "<%= config.bin %> <%= command.id %> --metadata CustomHelpMenuSection",
+    "<%= config.bin %> <%= command.id %> --metadata CustomHelpMenuSection --2gp-managed",
+    "<%= config.bin %> <%= command.id %> --metadata CustomHelpMenuSection --2gp-managed --api-version 65.0",
     "<%= config.bin %> <%= command.id %> --source-dir force-app",
     "<%= config.bin %> <%= command.id %> --source-dir force-app --source-dir unpackaged",
     "<%= config.bin %> <%= command.id %> --manifest src/package.xml",
-    "<%= config.bin %> <%= command.id %> --metadata CustomHelpMenuSection",
   ];
 
   public static readonly requiresProject = true;
@@ -77,7 +78,6 @@ export class MetadataCoverageCheck extends SfCommand<MetadataCoverageResult> {
     "source-dir": Flags.string({
       char: "d",
       summary: `File paths for source to check.`,
-      description: `Example values: 'force-app', 'force-app/main/default/'`,
       multiple: true,
       exactlyOne: ["manifest", "metadata", "source-dir"],
       helpGroup: "Sources",
@@ -93,7 +93,6 @@ export class MetadataCoverageCheck extends SfCommand<MetadataCoverageResult> {
     metadata: Flags.string({
       char: "m",
       summary: `Metadata component names to check.`,
-      description: `Example values: 'RecordType:Account.Business', 'Profile:Admin'`,
       multiple: true,
       exactlyOne: ["manifest", "metadata", "source-dir"],
       helpGroup: "Sources",
@@ -222,12 +221,20 @@ export class MetadataCoverageCheck extends SfCommand<MetadataCoverageResult> {
       requiredChannels.push("changeSets");
     }
     if (requiredChannels.length === 0) {
-      this.warn("You haven't specified any channels using flags. ");
+      const coverageChannelFlags = Object.values(MetadataCoverageCheck.flags)
+        .filter((flag) => flag.helpGroup === "Metadata Coverage Channels")
+        .map((flag) => `--${flag.name}`);
+      this.warn(
+        `You haven't specified any channels using flags. Please refine using any of the following flags: ${coverageChannelFlags.join(
+          ", "
+        )}`
+      );
     }
 
     const result: MetadataCoverageResult = {
       success: true,
-      uncovered: [],
+      message: "All metadata types are supported.",
+      unsupported: [],
     };
     for (const mdType of objects.Package.types) {
       let typeName = mdType.name;
@@ -237,7 +244,7 @@ export class MetadataCoverageCheck extends SfCommand<MetadataCoverageResult> {
           const coverage = report.types[typeName];
           if (!coverage) {
             result.success = false;
-            result.uncovered.push({
+            result.unsupported.push({
               type: typeName,
               members: [`${setting}Settings`],
             });
@@ -245,7 +252,7 @@ export class MetadataCoverageCheck extends SfCommand<MetadataCoverageResult> {
             requiredChannels.some((channel) => !coverage.channels[channel])
           ) {
             result.success = false;
-            result.uncovered.push({
+            result.unsupported.push({
               type: typeName,
               members: [`${setting}Settings`],
               channels: coverage.channels,
@@ -263,7 +270,7 @@ export class MetadataCoverageCheck extends SfCommand<MetadataCoverageResult> {
       const coverage = report.types[typeName];
       if (!coverage) {
         result.success = false;
-        result.uncovered.push({
+        result.unsupported.push({
           type: typeName,
           members: mdType.members,
         });
@@ -271,18 +278,32 @@ export class MetadataCoverageCheck extends SfCommand<MetadataCoverageResult> {
         requiredChannels.some((channel) => !coverage.channels[channel])
       ) {
         result.success = false;
-        result.uncovered.push({
+        result.message = "Some metadata types are not supported.";
+        result.unsupported.push({
           type: typeName,
           members: mdType.members,
           channels: coverage.channels,
         });
       }
     }
-    if (!result.success) {
-      this.logJson(result.uncovered);
-      throw new Error("Some metadata types are not covered.");
+    if (result.success) {
+      this.toSuccessJson(result);
+      this.logSuccess(result.message);
+    } else {
+      this.toErrorJson(result);
+      if (!this.jsonEnabled()) {
+        this.styledHeader("Unsupported Metadata Types");
+        const data = result.unsupported.map((row) => ({
+          type: row.type,
+          ...row.channels,
+          members: row.members.join(", "),
+        }));
+        this.table({
+          data,
+        });
+        this.error(result.message);
+      }
     }
-    this.logToStderr("Successfully checked Metadata Coverage Report.");
     return result;
   }
 }

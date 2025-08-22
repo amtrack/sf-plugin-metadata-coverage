@@ -1,11 +1,12 @@
 {
   "name": "sf-plugin-metadata-coverage",
   "version": "0.0.0-development",
-  "description": "sf plugin to check the metadata coverage of metadata types in your sfdx project using the metadata coverage report",
+  "description": "sf plugin to check the metadata coverage report for the given source",
   "keywords": [
     "sfdx-plugin",
     "sf-plugin"
   ],
+  "repository": "amtrack/sf-plugin-metadata-coverage",
   "license": "MIT",
   "type": "module",
   "bin": {
@@ -17,7 +18,6 @@
     "/data",
     "/oclif.manifest.json"
   ],
-  "repository": "amtrack/sf-plugin-metadata-coverage",
   "scripts": {
     "build": "rm -rf lib && tsc -p . && oclif manifest",
     "prepack": "npm run build",

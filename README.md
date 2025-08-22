@@ -1,6 +1,6 @@
 # sf-plugin-metadata-coverage
 
-> sf plugin to check the metadata coverage of metadata types in your sfdx project using the metadata coverage report
+> sf plugin to check the metadata coverage report for the given source
 
 [Metadata Coverage Report](https://developer.salesforce.com/docs/success/metadata-coverage-report/references/coverage-report/metadata-coverage-report.html)
 
@@ -20,28 +20,9 @@ Successfully checked Metadata Coverage Report.
 
 The command prints metadata types that are not supported and exits with an error code.
 
-### Input Sources
-
-- `--source-dir`
-- `--metadata`
-- `--manifest`
-
-### Checks
-
-- `--1gp-managed`
-- `--1gp-unmanaged`
-- `--2gp-managed`
-- `--2gp-unlocked`
-- `--2gp-unlocked-with-namespace`
-- `--source-tracking`
-- `--tooling-api`
-- `--metadata-api`
-- `--apex-metadata-api`
-- `--changeset`
-
 ### Example Use Cases
 
-Is the Metadata Type "CustomHelpMenuSection" supportd for a 2GP Managed Package?
+Is the Metadata Type "CustomHelpMenuSection" supported for a 2GP Managed Package?
 
 ```shell
 sf metadata-coverage check -m CustomHelpMenuSection --2gp-managed

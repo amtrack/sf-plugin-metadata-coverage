@@ -1,6 +1,7 @@
 import { TestContext } from "@salesforce/core/testSetup";
 import { stubSfCommandUx } from "@salesforce/sf-plugins-core";
 import { expect } from "chai";
+import { join } from "node:path";
 import { MetadataCoverageCheck } from "../../../src/commands/metadata-coverage/check.js";
 
 describe("metadata-coverage check", () => {
@@ -8,32 +9,27 @@ describe("metadata-coverage check", () => {
   stubSfCommandUx($$.SANDBOX);
 
   beforeEach(async () => {
-    $$.setConfigStubContents("SfProjectJson", {
-      contents: {
-        packageDirectories: [
-          {
-            path: "force-app",
-            default: true,
-          },
-        ],
-        sourceApiVersion: "64.0",
-      },
-    });
-    // $$.inProject(true);
-    // $$.localPathRetrieverSync()
+    $$.inProject(true);
   });
 
   it("should check successfully", async () => {
     const result = await MetadataCoverageCheck.run([
       "--source-dir",
-      "force-app",
+      join("test", "fixtures", "unpackaged"),
       "--2gp-unlocked",
     ]);
     expect(result.success).to.equal(true);
+    expect(result.unsupported).to.have.length(0);
   });
 
-  it.skip("should fail when uncovered", async () => {
-    const result = await MetadataCoverageCheck.run([]);
+  it("should fail when unsupported", async () => {
+    const result = await MetadataCoverageCheck.run([
+      "--source-dir",
+      join("test", "fixtures", "unpackaged"),
+      "--2gp-managed",
+      "--json",
+    ]);
     expect(result.success).to.equal(false);
+    expect(result.unsupported).to.have.length(1);
   });
 });
