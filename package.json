@@ -42,7 +42,7 @@
     "@salesforce/source-deploy-retrieve": "12.22.8"
   },
   "devDependencies": {
-    "@salesforce/dev-scripts": "11.0.3",
+    "@salesforce/dev-scripts": "11.0.4",
     "oclif": "4.22.12"
   }
 }
