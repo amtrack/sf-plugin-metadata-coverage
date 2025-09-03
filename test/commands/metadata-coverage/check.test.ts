@@ -3,18 +3,25 @@ import { stubSfCommandUx } from "@salesforce/sf-plugins-core";
 import { expect } from "chai";
 import { join } from "node:path";
 import { MetadataCoverageCheck } from "../../../src/commands/metadata-coverage/check.js";
+import { SfProject } from "@salesforce/core";
+import { mkdirSync } from "node:fs";
 
 describe("metadata-coverage check", () => {
   const $$ = new TestContext();
+  let project: SfProject;
 
   beforeEach(async () => {
     $$.inProject(true);
+    project = SfProject.getInstance();
     stubSfCommandUx($$.SANDBOX);
-    $$.setConfigStubContents("SfProjectJson", {
-      contents: {
-        packageDirectories: [{ path: "force-app", default: true }],
+    mkdirSync(join(project.getPath(), "force-app"), { recursive: true });
+    project.getSfProjectJson().set("packageDirectories", [
+      {
+        path: "force-app",
+        default: true,
       },
-    });
+    ]);
+    await project.getSfProjectJson().write();
   });
 
   it("should succeed when all types of the metadata flag are supported", async () => {
