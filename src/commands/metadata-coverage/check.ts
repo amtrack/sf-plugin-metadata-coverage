@@ -2,63 +2,19 @@ import { Flags, SfCommand } from "@salesforce/sf-plugins-core";
 import { ComponentSetBuilder } from "@salesforce/source-deploy-retrieve";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import type { Channels, MetadataCoverageReport } from "../../types.js";
 
-export interface MetadataCoverageReport {
-  types: { [key: string]: Type };
-}
-
-export interface Type {
-  details: Detail[];
-  knownIssues: KnownIssue[] | null;
-  channels: Channels;
-}
-
-export interface Channels {
-  unlockedPackagingWithoutNamespace: boolean;
-  unlockedPackagingWithNamespace: boolean;
-  toolingApi: boolean;
-  sourceTracking: boolean;
-  metadataApi: boolean;
-  managedPackaging: boolean;
-  classicUnmanagedPackaging: boolean;
-  classicManagedPackaging: boolean;
-  changeSets: boolean;
-  apexMetadataApi: boolean;
-}
-
-export interface Detail {
-  url: null | string;
-  name: Name;
-  detailText?: null;
-  detailRichText?: string;
-}
-
-export enum Name {
-  DevHubRequirementWhenUsingScratchOrgs = "Dev Hub requirement when using scratch orgs",
-  MetadataAPIDocumentation = "Metadata API Documentation",
-  Pilot = "Pilot",
-}
-
-export interface KnownIssue {
-  url: string;
-  lastUpdated: string;
-  affectedUsers: number;
-  tags: null | string;
-  status: Status;
-  summary: string;
-  title: string;
-}
-
-export enum Status {
-  Fixed = "Fixed",
-  InReview = "In Review",
-  NoFix = "No Fix",
-}
+export const REPORT_URL =
+  "https://dx-extended-coverage.my.salesforce-sites.com/services/apexrest/report";
 
 export type MetadataCoverageResult = {
   success: boolean;
   message: string;
-  unsupported: { type: string; members: string[]; channels?: Channels }[];
+  unsupported: {
+    type: string;
+    members: string[];
+    channels: Partial<Channels>;
+  }[];
 };
 
 export class MetadataCoverageCheck extends SfCommand<MetadataCoverageResult> {
@@ -135,31 +91,19 @@ export class MetadataCoverageCheck extends SfCommand<MetadataCoverageResult> {
     );
     let report: MetadataCoverageReport;
     if (existsSync(reportPath)) {
-      report = JSON.parse(
-        readFileSync(
-          join(
-            dirname(new URL(import.meta.url).pathname),
-            "..",
-            "..",
-            "..",
-            "data",
-            `report-${apiVersionMajor}.json`
-          ),
-          "utf8"
-        )
-      );
+      report = JSON.parse(readFileSync(reportPath, "utf8"));
     } else {
       this.spinner.start(
         `Downloading Metadata Coverage Report v${apiVersionMajor}`
       );
-      const reportResult = await fetch(
-        `https://dx-extended-coverage.my.salesforce-sites.com/services/apexrest/report?version=${apiVersionMajor}`
+      const reportResponse = await fetch(
+        `${REPORT_URL}?version=${apiVersionMajor}`
       );
-      if (!reportResult.ok) {
+      this.spinner.stop();
+      if (!reportResponse.ok) {
         throw new Error("Failed downloading Metadata Coverage Report.");
       }
-      report = (await reportResult.json()) as MetadataCoverageReport;
-      this.spinner.stop();
+      report = (await reportResponse.json()) as MetadataCoverageReport;
     }
     const componentSet = await ComponentSetBuilder.build({
       sourcepath: flags["source-dir"],
@@ -186,7 +130,9 @@ export class MetadataCoverageCheck extends SfCommand<MetadataCoverageResult> {
     });
     const objects = await componentSet.getObject();
     this.logToStderr(
-      `Checking ${objects.Package.types.length} metadata types.`
+      `Checking ${objects.Package.types.length} metadata type${
+        objects.Package.types.length > 1 ? "s" : ""
+      }.`
     );
 
     const requiredChannels: (keyof Channels)[] = [];
@@ -241,21 +187,29 @@ export class MetadataCoverageCheck extends SfCommand<MetadataCoverageResult> {
       if (typeName === "Settings") {
         for (const setting of mdType.members) {
           typeName = `${setting}Settings`;
-          const coverage = report.types[typeName];
-          if (!coverage) {
+          const coverageForType = report.types[typeName];
+          if (!coverageForType) {
             result.success = false;
             result.unsupported.push({
               type: typeName,
               members: [`${setting}Settings`],
+              channels: {},
             });
           } else if (
-            requiredChannels.some((channel) => !coverage.channels[channel])
+            requiredChannels.some(
+              (channel) => !coverageForType.channels[channel]
+            )
           ) {
             result.success = false;
+            const channels = Object.fromEntries(
+              requiredChannels
+                .filter((key) => key in coverageForType.channels)
+                .map((key) => [key, coverageForType.channels[key]])
+            );
             result.unsupported.push({
               type: typeName,
               members: [`${setting}Settings`],
-              channels: coverage.channels,
+              channels,
             });
           }
         }
@@ -267,30 +221,34 @@ export class MetadataCoverageCheck extends SfCommand<MetadataCoverageResult> {
       if (typeName === "MatchingRule") {
         typeName = "MatchingRules";
       }
-      const coverage = report.types[typeName];
-      if (!coverage) {
+      const coverageForType = report.types[typeName];
+      if (!coverageForType) {
         result.success = false;
         result.unsupported.push({
           type: typeName,
           members: mdType.members,
+          channels: {},
         });
       } else if (
-        requiredChannels.some((channel) => !coverage.channels[channel])
+        requiredChannels.some((channel) => !coverageForType.channels[channel])
       ) {
         result.success = false;
         result.message = "Some metadata types are not supported.";
+        const channels = Object.fromEntries(
+          requiredChannels
+            .filter((key) => key in coverageForType.channels)
+            .map((key) => [key, coverageForType.channels[key]])
+        );
         result.unsupported.push({
           type: typeName,
           members: mdType.members,
-          channels: coverage.channels,
+          channels,
         });
       }
     }
     if (result.success) {
-      this.toSuccessJson(result);
       this.logSuccess(result.message);
     } else {
-      this.toErrorJson(result);
       if (!this.jsonEnabled()) {
         this.styledHeader("Unsupported Metadata Types");
         const data = result.unsupported.map((row) => ({

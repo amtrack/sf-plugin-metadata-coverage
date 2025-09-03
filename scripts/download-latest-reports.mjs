@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 
-import { createWriteStream } from "fs";
-import { Readable } from "stream";
+import { createWriteStream } from "node:fs";
 import { join } from "node:path";
+import { Readable } from "node:stream";
+import { REPORT_URL } from "../src/commands/metadata-coverage/check.ts";
 
 const result = await fetch("https://org62.my.salesforce.com/services/data");
 const releases = await result.json();
@@ -15,9 +16,7 @@ for (const versionNumber of versionNumbers) {
   console.error(
     `Downloading Metadata Coverage Report for ${apiVersionMajor}...`
   );
-  const response = await fetch(
-    `https://dx-extended-coverage.my.salesforce-sites.com/services/apexrest/report?version=${apiVersionMajor}`
-  );
+  const response = await fetch(`${REPORT_URL}?version=${apiVersionMajor}`);
   let writer = createWriteStream(
     join("data", `report-${apiVersionMajor}.json`)
   );
