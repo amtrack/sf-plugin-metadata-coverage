@@ -84,7 +84,7 @@ EXAMPLES
   $ sf metadata-coverage check --metadata CustomHelpMenuSection --2gp-managed --api-version 65.0
 ```
 
-_See code: [lib/commands/metadata-coverage/check.js](https://github.com/amtrack/sf-plugin-metadata-coverage/blob/main/lib/commands/metadata-coverage/check.js)_
+_See code: [lib/commands/metadata-coverage/check.js](https://github.com/amtrack/sf-plugin-metadata-coverage/blob/main/src/commands/metadata-coverage/check.ts)_
 
 ## `sf metadata-coverage download`
 
@@ -112,7 +112,7 @@ EXAMPLES
   $ sf metadata-coverage download --api-version 65.0
 ```
 
-_See code: [lib/commands/metadata-coverage/download.js](https://github.com/amtrack/sf-plugin-metadata-coverage/blob/main/lib/commands/metadata-coverage/download.js)_
+_See code: [lib/commands/metadata-coverage/download.js](https://github.com/amtrack/sf-plugin-metadata-coverage/blob/main/src/commands/metadata-coverage/download.ts)_
 <!-- commandsstop -->
 
 ### Example Use Cases

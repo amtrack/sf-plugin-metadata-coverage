@@ -33,7 +33,7 @@
     ],
     "bin": "sf",
     "commands": "./lib/commands",
-    "repositoryPrefix": "<%- repo %>/blob/main/<%- commandPath %>",
+    "repositoryPrefix": "<%- repo %>/blob/main/<%- commandPath.replace('lib/', 'src/').replace('.js', '.ts') %>",
     "topicSeparator": " ",
     "topics": {
       "metadata-coverage": {
