@@ -36,9 +36,37 @@ Found 38 metadata type to check.
 Error (2): Some metadata types are not supported.
 ```
 
+### Example Use Cases
+
+Is the Metadata Type "CustomHelpMenuSection" supported for a 2GP Managed Package?
+
+```shell
+sf metadata-coverage check -m CustomHelpMenuSection --2gp-managed
+```
+
+... or maybe in the upcoming release?
+
+```shell
+sf metadata-coverage check -m CustomHelpMenuSection --2gp-managed --api-version 65.0
+```
+
+Can I create an Unlocked Package from my source directory?
+
+```shell
+sf metadata-coverage check --source-dir force-app --2gp-unlocked
+```
+
+Can I convert my 1GP Managed Package to a 2GP Managed Package?
+
+```shell
+sf project retrieve start --package-name MyPkg --target-metadata-dir src --unzip --target-org my-pkg-org
+sf metadata-coverage check --manifest src/unpackaged/package.xml --2gp-managed
+```
+
+### Commands
+
 <!-- commands -->
 * [`sf metadata-coverage check`](#sf-metadata-coverage-check)
-* [`sf metadata-coverage download`](#sf-metadata-coverage-download)
 
 ## `sf metadata-coverage check`
 
@@ -87,62 +115,7 @@ EXAMPLES
 ```
 
 _See code: [lib/commands/metadata-coverage/check.js](https://github.com/amtrack/sf-plugin-metadata-coverage/blob/main/src/commands/metadata-coverage/check.ts)_
-
-## `sf metadata-coverage download`
-
-Explicitly download a Metadata Coverage Report.
-
-```
-USAGE
-  $ sf metadata-coverage download [--json] [--flags-dir <value>] [--api-version <value>]
-
-FLAGS
-  --api-version=<value>  The API version of the Metadata Coverage Report to use.
-
-GLOBAL FLAGS
-  --flags-dir=<value>  Import flag values from a directory.
-  --json               Format output as json.
-
-DESCRIPTION
-  Explicitly download a Metadata Coverage Report.
-
-  By default it downloads the Metadata Coverage Report for the version of the sfdx-project.json > sourceApiVersion.
-
-EXAMPLES
-  $ sf metadata-coverage download
-
-  $ sf metadata-coverage download --api-version 65.0
-```
-
-_See code: [lib/commands/metadata-coverage/download.js](https://github.com/amtrack/sf-plugin-metadata-coverage/blob/main/src/commands/metadata-coverage/download.ts)_
 <!-- commandsstop -->
-
-### Example Use Cases
-
-Is the Metadata Type "CustomHelpMenuSection" supported for a 2GP Managed Package?
-
-```shell
-sf metadata-coverage check -m CustomHelpMenuSection --2gp-managed
-```
-
-... or maybe in the upcoming release?
-
-```shell
-sf metadata-coverage check -m CustomHelpMenuSection --2gp-managed --api-version 65.0
-```
-
-Can I create an Unlocked Package from my source directory?
-
-```shell
-sf metadata-coverage check --source-dir force-app --2gp-unlocked
-```
-
-Can I convert my 1GP Managed Package to a 2GP Managed Package?
-
-```shell
-sf project retrieve start --package-name MyPkg --target-metadata-dir src --unzip --target-org my-pkg-org
-sf metadata-coverage check --manifest src/unpackaged/package.xml --2gp-managed
-```
 
 ## Development
 
