@@ -14,7 +14,8 @@ sf plugins install sf-plugin-metadata-coverage
 
 ```sh-session
 $ sf metadata-coverage check --source-dir force-app --2gp-unlocked
-Checking 38 metadata type for unlockedPackagingWithoutNamespace using API version 64.0.
+Downloading Metadata Coverage Report v64... done
+Found 38 metadata type to check.
 All metadata types are supported.
 ```
 
@@ -22,7 +23,8 @@ The command prints metadata types that are not supported and exits with an error
 
 ```sh-session
 $ sf metadata-coverage check --source-dir force-app --2gp-managed
-Checking 38 metadata types for managedPackaging using API version 64.0.
+Using cached Metadata Coverage Report v64.
+Found 38 metadata type to check.
 === Unsupported Metadata Types
 
 ┌───────────────────────┬───────────────────┬───────────────────────┐
