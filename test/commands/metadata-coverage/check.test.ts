@@ -39,6 +39,7 @@ describe("metadata-coverage check", function () {
       err = e;
     }
     expect(err).to.match(/You haven't specified any channels/);
+    expect(err).to.match(/--2gp-managed/);
   });
 
   it("should fail when some types are unsupported", async () => {
@@ -50,6 +51,7 @@ describe("metadata-coverage check", function () {
     ]);
     expect(result.success).to.equal(false);
     expect(result.unsupported).to.have.length(1);
+    expect(result.unsupported[0].type).to.equal("CustomHelpMenuSection");
   });
 
   it("should succeed when all types of the metadata flag are supported", async () => {

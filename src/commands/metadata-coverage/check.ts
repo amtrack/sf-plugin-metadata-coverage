@@ -79,17 +79,13 @@ export class MetadataCoverageCheck extends SfCommand<MetadataCoverageResult> {
     const { flags } = await this.parse(MetadataCoverageCheck);
 
     const channelsToCheck: (keyof Channels)[] = [];
-    for (const flag of Object.keys(FLAG_TO_CHANNEL)) {
+    for (const flag of getChannelFlagNames()) {
       if (flags[flag as keyof typeof flags]) {
-        channelsToCheck.push(
-          FLAG_TO_CHANNEL[flag as keyof typeof FLAG_TO_CHANNEL]
-        );
+        channelsToCheck.push(FLAG_TO_CHANNEL[flag]);
       }
     }
     if (channelsToCheck.length === 0) {
-      const flagNames = METADATA_COVERAGE_CHANNEL_FLAGNAMES.map(
-        (name) => `--${name}`
-      );
+      const flagNames = getChannelFlagNames().map((name) => `--${name}`);
       this.error(
         `You haven't specified any channels using flags. Please refine using any of the following flags:\n${flagNames.join(
           "\n"
@@ -192,16 +188,20 @@ export class MetadataCoverageCheck extends SfCommand<MetadataCoverageResult> {
   }
 }
 
-export const METADATA_COVERAGE_CHANNEL_FLAGNAMES = Object.values(
-  MetadataCoverageCheck.flags
-)
-  .filter((flag) => flag.helpGroup === "Metadata Coverage Channels")
-  .map((flag) => flag.name);
+type ChannelFlag = Exclude<
+  keyof typeof MetadataCoverageCheck.flags,
+  "manifest" | "metadata" | "source-dir" | "api-version"
+>;
 
-const FLAG_TO_CHANNEL: Record<
-  (typeof METADATA_COVERAGE_CHANNEL_FLAGNAMES)[number],
-  keyof Channels
-> = {
+function getChannelFlagNames(): ChannelFlag[] {
+  return Object.values(MetadataCoverageCheck.flags)
+    .filter((flag) => flag.helpGroup === "Metadata Coverage Channels")
+    .map((flag) => flag.name) as ChannelFlag[];
+}
+
+const FLAG_TO_CHANNEL: {
+  [K in ChannelFlag]: keyof Channels;
+} = {
   "1gp-managed": "classicManagedPackaging",
   "1gp-unmanaged": "classicUnmanagedPackaging",
   "2gp-managed": "managedPackaging",
