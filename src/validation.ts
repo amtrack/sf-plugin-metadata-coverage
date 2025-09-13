@@ -23,8 +23,16 @@ export function getFilteredChannels(
 
 export function mapTypeForMetadataReport(typeName: string): string {
   switch (typeName) {
+    case "AssignmentRule":
+      return "AssignmentRules";
+    case "AutoResponseRule":
+      return "AutoResponseRules";
     case "CustomLabel":
       return "CustomLabels";
+    case "EscalationRule":
+      return "EscalationRules";
+    case "ManagedTopic":
+      return "ManagedTopics";
     case "MatchingRule":
       return "MatchingRules";
     default:
