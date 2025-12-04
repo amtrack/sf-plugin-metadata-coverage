@@ -40,7 +40,7 @@ jobs:
       - name: Build
         run: npm run build
       - name: Release package
-        run: npx semantic-release
+        run: npx -y semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           npm_config_ignore_scripts: true
