@@ -6,7 +6,10 @@
     "sfdx-plugin",
     "sf-plugin"
   ],
-  "repository": "amtrack/sf-plugin-metadata-coverage",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/amtrack/sf-plugin-metadata-coverage.git"
+  },
   "license": "MIT",
   "type": "module",
   "bin": {
